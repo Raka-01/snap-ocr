@@ -1,34 +1,36 @@
 package com.raka.textextractor.main;
 
-import java.awt.EventQueue;
-
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.SwingConstants;
-import javax.swing.Timer;
-import javax.swing.filechooser.FileNameExtensionFilter;
-import javax.swing.JTextField;
-import javax.swing.JButton;
-import javax.swing.JFileChooser;
-
 import java.awt.Color;
+import java.awt.EventQueue;
+import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
-import java.awt.event.ActionEvent;
-import javax.swing.JRadioButton;
+import java.io.IOException;
+import java.nio.file.Paths;
+
+import javax.swing.JButton;
+import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JTextField;
+import javax.swing.SwingConstants;
+import javax.swing.Timer;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.filechooser.FileNameExtensionFilter;
+
+import net.sourceforge.tess4j.TesseractException;
 
 public class Interface {
 	
 	public String imageFilePath;
 	public String textFilePath;
-	private String imageName;
-	private String textName;
 	private File imageFile;
 
 	private JFrame frame;
 	private JTextField imageField;
 	private JTextField textField;
-	private JRadioButton samePath;
 	private JLabel informLabel;
 	private File currentDirectory = new File("C:\\Users\\RAKESH KUMAR\\Desktop");
 
@@ -42,7 +44,7 @@ public class Interface {
 					Interface window = new Interface();
 					window.frame.setVisible(true);
 				} catch (Exception e) {
-					e.printStackTrace();
+					JOptionPane.showMessageDialog(null, "Error occurred in the application");
 				}
 			}
 		});
@@ -70,28 +72,76 @@ public class Interface {
 		header.setBounds(10, 10, 466, 36);
 		frame.getContentPane().add(header);
 		
-		JLabel imageLabel = new JLabel("Enter path to your image file :");
-		imageLabel.setBounds(10, 56, 231, 20);
+		JLabel instruction = new JLabel("(Do add extension to the file path)");
+		instruction.setHorizontalAlignment(SwingConstants.CENTER);
+		instruction.setBounds(10, 41, 466, 26);
+		frame.getContentPane().add(instruction);
+		
+		JLabel imageLabel = new JLabel("Enter path to your image file : (.jpg, .jpeg, .png, .gif)");
+		imageLabel.setBounds(10, 83, 348, 20);
 		frame.getContentPane().add(imageLabel);
 		
 		imageField = new JTextField();
-		imageField.setBounds(10, 83, 376, 26);
+		imageField.getDocument().addDocumentListener(new DocumentListener() {
+			
+			@Override
+			public void removeUpdate(DocumentEvent e) {
+				updatePath();
+				
+			}
+			
+			@Override
+			public void insertUpdate(DocumentEvent e) {
+				updatePath();
+				
+			}
+			
+			@Override
+			public void changedUpdate(DocumentEvent e) {
+				updatePath();
+				
+			}
+			
+			private void updatePath() {
+				imageFilePath = imageField.getText();
+			}
+		});
+		imageField.setBounds(10, 113, 376, 26);
 		frame.getContentPane().add(imageField);
 		imageField.setColumns(10);
 		
-		JLabel textLabel = new JLabel("Enter path to text file directory :");
+		JLabel textLabel = new JLabel("Enter path to text file directory : ( .txt)");
 		textLabel.setBounds(10, 172, 231, 20);
 		frame.getContentPane().add(textLabel);
 		
 		textField = new JTextField();
+		textField.getDocument().addDocumentListener(new DocumentListener() {
+			
+			@Override
+			public void removeUpdate(DocumentEvent e) {
+				updatePath();
+				
+			}
+			
+			@Override
+			public void insertUpdate(DocumentEvent e) {
+				updatePath();
+				
+			}
+			
+			@Override
+			public void changedUpdate(DocumentEvent e) {
+				updatePath();
+				
+			}
+			
+			private void updatePath() {
+				textFilePath = textField.getText();
+			}
+		});
 		textField.setBounds(10, 198, 376, 26);
 		frame.getContentPane().add(textField);
 		textField.setColumns(10);
-		
-		JButton btnNewButton = new JButton("Generate Text File");
-		btnNewButton.setBackground(new Color(0, 255, 0));
-		btnNewButton.setBounds(153, 263, 179, 33);
-		frame.getContentPane().add(btnNewButton);
 		
 		JButton browseImageFile = new JButton("Browse");
 		browseImageFile.addActionListener(new ActionListener() {
@@ -111,15 +161,6 @@ public class Interface {
 					imageFilePath = imageFile.getAbsolutePath();
 					
 					imageField.setText(imageFilePath);
-					if(samePath.isSelected()) {
-						String imageFileParent = imageFile.getParent();
-						imageName = imageFile.getName();
-						textName = imageName.substring(0, imageName.lastIndexOf('.')) + ".txt";
-						
-						textFilePath = imageFileParent + File.separator + textName;
-						
-						textField.setText(textFilePath);
-					}
 					
 				}
 				else {
@@ -129,32 +170,29 @@ public class Interface {
 			}
 		});
 		browseImageFile.setBackground(new Color(192, 192, 192));
-		browseImageFile.setBounds(391, 85, 85, 24);
+		browseImageFile.setBounds(391, 113, 85, 24);
 		frame.getContentPane().add(browseImageFile);
 		
 		JButton browseTextFile = new JButton("Browse");
 		browseTextFile.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				if(!imageField.getText().isEmpty()) {
-					JFileChooser fileChooser = new JFileChooser();
-					fileChooser.setCurrentDirectory(currentDirectory);
-					fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+				JFileChooser fileChooser = new JFileChooser();
+				fileChooser.setCurrentDirectory(currentDirectory);
+				fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+				
+				FileNameExtensionFilter filter = new FileNameExtensionFilter("Text Files (*.txt)", "txt");
+				fileChooser.setFileFilter(filter);
+				
+				int result = fileChooser.showOpenDialog(null);
+				
+				if(result == JFileChooser.APPROVE_OPTION) {
+					File file = fileChooser.getSelectedFile();
 					
-					int result = fileChooser.showOpenDialog(null);
-					
-					if(result == JFileChooser.APPROVE_OPTION) {
-						File file = fileChooser.getSelectedFile();
-						
-						String textFileParent = file.getAbsolutePath();
-						
-						textName = imageName.substring(0, imageName.lastIndexOf('.')) + ".txt";
-						
-						textFilePath = textFileParent + File.separator + textName;
-						textField.setText(textFileParent);
-					}
+					textFilePath = file.getAbsolutePath();
+					textField.setText(textFilePath);
 				}
 				else {
-					informLabel.setText("Enter the image file path first");
+					informLabel.setText("No File Selected");
 					setTimer(5000);
 				}
 				
@@ -164,36 +202,44 @@ public class Interface {
 		browseTextFile.setBounds(391, 198, 85, 24);
 		frame.getContentPane().add(browseTextFile);
 		
-		samePath = new JRadioButton("Set text file path same as image file path");
-		samePath.addActionListener(new ActionListener() {
+		JButton generateText = new JButton("Generate Text File");
+		generateText.addActionListener(new ActionListener() {
+			@Override
 			public void actionPerformed(ActionEvent e) {
-				if(samePath.isSelected()) {
-					String imageFileParent = imageFile.getParent();
-					imageName = imageFile.getName();
-					textName = imageName.substring(0, imageName.lastIndexOf('.')) + ".txt";
-					
-					textFilePath = imageFileParent + File.separator + textName;
-					
-					textField.setText(textFilePath);
-				}
-				else {
-					if(imageFilePath.equals(textFilePath)) {
-						textField.setText("");
-						textFilePath = "";
+				if(isValidFilePath(imageFilePath)) {
+					if (isValidFilePath(textFilePath)) {
+						TextOCR converter = new TextOCR(imageFilePath, textFilePath);
+						
+						try {
+							converter.runOCR();
+							
+							informLabel.setText("Text File Created Successfully!");
+						}
+						catch (TesseractException | IOException e1) {
+							informLabel.setText("Error occurred while creating text file");
+						}
+					}
+					else {
+						informLabel.setText("Invalid Text File Path");
+						setTimer(5000);
 					}
 				}
+				else {
+					informLabel.setText("Invalid Image File Path");
+					setTimer(5000);
+				}
+				
 			}
 		});
-		samePath.setBackground(new Color(173, 216, 230));
-		samePath.setBounds(10, 150, 322, 21);
-		
-		
-		frame.getContentPane().add(samePath);
+		generateText.setBackground(new Color(0, 255, 0));
+		generateText.setBounds(153, 263, 179, 33);
+		frame.getContentPane().add(generateText);
 		
 		informLabel = new JLabel("");
 		informLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		informLabel.setBounds(10, 309, 444, 36);
 		frame.getContentPane().add(informLabel);
+		
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 	}
 	
@@ -208,5 +254,15 @@ public class Interface {
 		});
 		timer.setRepeats(false);
 		timer.start();
+	}
+	
+	private boolean isValidFilePath(String path) {
+		try {
+			Paths.get(path);
+			return true;
+		}
+		catch(Exception e) {
+			return false;
+		}
 	}
 }

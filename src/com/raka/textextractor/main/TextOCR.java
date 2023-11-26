@@ -10,27 +10,29 @@ import net.sourceforge.tess4j.Tesseract;
 import net.sourceforge.tess4j.TesseractException;
 
 public class TextOCR {
-
-	public static void main(String[] args) {
+	private String imageFilePath;
+	private String textFilePath;
+	
+	public TextOCR(String imageFilePath, String textFilePath) {
+		this.imageFilePath = imageFilePath;
+		this.textFilePath = textFilePath;
+	}
+	
+	public void runOCR() throws TesseractException, IOException {
 		ITesseract tesseract = new Tesseract();
 		
-		try {
-			tesseract.setDatapath("D:\\Tesseract-OCR\\tessdata");
-			
-			String text = tesseract.doOCR(new File("C:\\Users\\RAKESH KUMAR\\Pictures\\Screenshots\\certificate.png"));
-			
-			FileWriter out = new FileWriter(new File("D:\\Tesseract-OCR\\data\\text.txt"));
-			
-			BufferedWriter writer = new BufferedWriter(out);
-			
-			writer.write(text);
-			
-			writer.close();
-		}
-		catch(TesseractException | IOException e) {
-			e.printStackTrace();
-		}
-
+		tesseract.setDatapath("D:\\Tesseract-OCR\\tessdata");
+		
+		String text = tesseract.doOCR(new File(imageFilePath));
+		
+		FileWriter out = new FileWriter(new File(textFilePath));
+		
+		BufferedWriter writer = new BufferedWriter(out);
+		
+		writer.write(text);
+		
+		writer.close();
+		
 	}
 
 }
